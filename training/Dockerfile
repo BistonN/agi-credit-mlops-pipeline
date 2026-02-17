@@ -7,4 +7,4 @@ RUN Rscript /app/packages.R
 
 COPY train.R /app/train.R
 
-CMD ["Rscript", "train.R"]
+CMD ["Rscript", "/app/train.R"]

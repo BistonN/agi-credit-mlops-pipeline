@@ -3,4 +3,4 @@ gunicorn
 pandas
 joblib
 python-dotenv
-pyreadr
+rpy2

@@ -1,0 +1,82 @@
+name: mlops-pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - test/**
+  pull_request:
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ------------------
+      # 1. Lint básico Python
+      # ------------------
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install lint tools
+        run: pip install flake8
+
+      - name: Run lint
+        run: flake8 api || true
+
+      # ------------------
+      # 2. Build treino + gerar modelo
+      # ------------------
+      - name: Build training image
+        run: docker build -t credit-training ./training
+
+      - name: Run training container
+        run: |
+          mkdir -p training/artifacts
+          docker run \
+            -v ${{ github.workspace }}/training/data:/app/data \
+            -v ${{ github.workspace }}/training/artifacts:/app/artifacts \
+            credit-training
+
+      - name: Check model artifacts
+        run: |
+          test -f training/artifacts/model_v1.rds
+          test -f training/artifacts/model_metadata.json
+
+      # ------------------
+      # 3. Build API image
+      # ------------------
+      - name: Build API image
+        run: docker build -t credit-api ./api
+
+      # ------------------
+      # 4. Integration test (/health)
+      # ------------------
+      - name: Run API container
+        run: |
+          docker run -d \
+            -p 5000:5000 \
+            -v ${{ github.workspace }}/training/artifacts:/app/artifacts \
+            credit-api
+
+      - name: Wait API startup
+        run: sleep 10
+
+      - name: Health check
+        run: curl --fail http://localhost:5000/health
+
+      # ------------------
+      # 5. Generate image tags
+      # ------------------
+      - name: Generate image tag
+        run: |
+          TAG=$(date +%Y%m%d)-${GITHUB_SHA::7}
+          echo "IMAGE_TAG=$TAG" >> $GITHUB_ENV
+
+      - name: Show tag
+        run: echo "Docker tag is $IMAGE_TAG"

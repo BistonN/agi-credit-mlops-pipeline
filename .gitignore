@@ -1,3 +1,5 @@
 .env
 /training/data
 /training/artifacts
+venv
+__pycache__

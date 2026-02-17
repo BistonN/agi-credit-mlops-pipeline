@@ -10,8 +10,10 @@ predict_bp = Blueprint("predict", __name__)
 
 MODEL_PATH = os.getenv("MODEL_PATH", "/app/artifacts/model_v1.rds")
 
+robjects.r("library(tidymodels)")
+
 readRDS = robjects.r["readRDS"]
-predict_r = robjects.r["predict"]
+predict_tm = robjects.r["predict"]
 
 model = readRDS(MODEL_PATH)
 
@@ -23,9 +25,9 @@ def predict():
     with localconverter(default_converter + pandas2ri.converter):
         r_df = robjects.conversion.py2rpy(df)
 
-    probs = predict_r(model, r_df, type="prob")
-    prob_default = float(probs.rx2(".pred_1")[0])
+    probs = predict_tm(model, r_df, type="prob")
 
+    prob_default = float(probs.rx2(".pred_1")[0])
     prediction = int(prob_default >= 0.5)
 
     return jsonify({

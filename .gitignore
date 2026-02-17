@@ -1,0 +1,8 @@
+.env
+/training/data
+/training/artifacts
+venv
+__pycache__
+.vscode
+.RData
+.Rhistory

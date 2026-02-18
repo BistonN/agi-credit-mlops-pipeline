@@ -21,7 +21,7 @@ jobs:
       - name: Download training dataset
         run: |
           mkdir -p training/data
-          wget -O training/data/application_train.csv "https://drive.google.com/uc?export=download&id=1rnDNuFytTG6N6H-qNmsN4ZJxPYULSSuU"
+          wget -O training/data/application_train.csv "https://www.dropbox.com/scl/fi/hmhnf33bbapvpsq6becmo/application_train.csv?rlkey=t9i95h11b1uyc6dsh6s40z3x4&st=xzu9ijx2&dl=0"
 
       - name: Validate data and artifacts structure
         run: |

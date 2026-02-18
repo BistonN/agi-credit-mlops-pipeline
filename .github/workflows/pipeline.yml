@@ -11,27 +11,22 @@ jobs:
   pipeline:
     runs-on: ubuntu-latest
 
+    # ------------------
+    # Validations
+    # ------------------
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Download training dataset
+        run: |
+          mkdir -p training/data
+          wget -O training/data/application_train.csv "https://drive.google.com/uc?export=download&id=1rnDNuFytTG6N6H-qNmsN4ZJxPYULSSuU"
+
       - name: Validate data and artifacts structure
         run: |
-          echo "Checking training data folder..."
-          if [ ! -d training/data ]; then
-            echo "ERROR: training/data folder not found"
-            exit 1
-          fi
-
-          if [ -z "$(ls -A training/data 2>/dev/null)" ]; then
-            echo "ERROR: training/data is empty"
-            exit 1
-          fi
-
-          echo "Checking artifacts folder..."
+          test -f training/data/application_train.csv || exit 1
           mkdir -p training/artifacts
-
-          echo "Structure OK"
 
       # ------------------
       # 1. Lint básico Python

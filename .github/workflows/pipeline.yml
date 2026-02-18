@@ -15,6 +15,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Validate data and artifacts structure
+        run: |
+          echo "Checking training data folder..."
+          if [ ! -d training/data ]; then
+            echo "ERROR: training/data folder not found"
+            exit 1
+          fi
+
+          if [ -z "$(ls -A training/data 2>/dev/null)" ]; then
+            echo "ERROR: training/data is empty"
+            exit 1
+          fi
+
+          echo "Checking artifacts folder..."
+          mkdir -p training/artifacts
+
+          echo "Structure OK"
+
       # ------------------
       # 1. Lint básico Python
       # ------------------

@@ -23,6 +23,12 @@ jobs:
           mkdir -p training/data
           wget -O training/data/application_train.csv "https://www.dropbox.com/scl/fi/hmhnf33bbapvpsq6becmo/application_train.csv?rlkey=t9i95h11b1uyc6dsh6s40z3x4&st=xzu9ijx2&dl=0"
 
+          if head training/data/application_train.csv | grep -qi html; then
+            echo "Download failed — received HTML instead of CSV"
+            exit 1
+          fi
+
+
       - name: Validate data and artifacts structure
         run: |
           test -f training/data/application_train.csv || exit 1

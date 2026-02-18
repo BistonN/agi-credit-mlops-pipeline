@@ -37,16 +37,21 @@ jobs:
 
       - name: Run training container
         run: |
-          mkdir -p training/artifacts
-          docker run \
-            -v ${{ github.workspace }}/training/data:/app/data \
-            -v ${{ github.workspace }}/training/artifacts:/app/artifacts \
-            credit-training
+          docker create --name training-job credit-training
+          docker cp training/data training-job:/app/data
+          docker start -a training-job
+          docker cp training-job:/app/artifacts ./training/artifacts
+          docker rm training-job
+
 
       - name: Check model artifacts
         run: |
+          echo "Listing artifacts folder:"
+          ls -la training/artifacts || true
+
           test -f training/artifacts/model_v1.rds
           test -f training/artifacts/model_metadata.json
+
 
       # ------------------
       # 3. Build API image

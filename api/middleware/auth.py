@@ -7,12 +7,14 @@ SECRET = os.getenv("JWT_SECRET")
 def token_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        token = request.headers.get("Authorization")
-        if not token or not token.startswith("Bearer "):
+        auth = request.headers.get("Authorization")
+        if not auth or not auth.startswith("Bearer "):
             return jsonify({"error": "token missing"}), 401
         try:
-            jwt.decode(token.split()[1], SECRET, algorithms=["HS256"])
-        except:
+            jwt.decode(auth.split()[1], SECRET, algorithms=["HS256"])
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "token expired"}), 401
+        except jwt.InvalidTokenError:
             return jsonify({"error": "invalid token"}), 401
         return f(*args, **kwargs)
     return wrapper

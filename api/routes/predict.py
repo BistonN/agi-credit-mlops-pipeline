@@ -5,6 +5,7 @@ from rpy2 import robjects
 from rpy2.robjects import pandas2ri
 from rpy2.robjects.conversion import localconverter
 from rpy2.robjects import default_converter
+from middleware.auth import token_required
 
 predict_bp = Blueprint("predict", __name__)
 
@@ -18,6 +19,7 @@ predict_tm = robjects.r["predict"]
 model = readRDS(MODEL_PATH)
 
 @predict_bp.route("/predict", methods=["POST"])
+@token_required
 def predict():
     data = request.get_json()
     df = pd.DataFrame([data])

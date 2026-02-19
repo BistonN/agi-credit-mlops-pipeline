@@ -28,5 +28,18 @@ app.register_blueprint(predict_bp)
 app.register_blueprint(model_info_bp)
 app.register_blueprint(login_bp)
 
+@app.errorhandler(400)
+def bad_request(e):
+    return jsonify({"error": "bad request"}), 400
+
+@app.errorhandler(404)
+def not_found(e):
+    return jsonify({"error": "not found"}), 404
+
+@app.errorhandler(Exception)
+def internal_error(e):
+    logger.exception(e)
+    return jsonify({"error": "internal server error"}), 500
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

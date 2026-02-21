@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 import json, jwt, datetime, os
 from pathlib import Path
 
-bp = Blueprint("login", __name__)
+login_bp = Blueprint("login", __name__)
 SECRET = os.getenv("JWT_SECRET")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -17,7 +17,7 @@ def validate_login(data):
         return "password required"
     return None
 
-@bp.route("/login", methods=["POST"])
+@login_bp.route("/login", methods=["POST"])
 def login():
     data = request.get_json(silent=True)
     err = validate_login(data)

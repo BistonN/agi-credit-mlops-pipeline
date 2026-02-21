@@ -6,6 +6,8 @@ from rpy2.robjects import pandas2ri
 from rpy2.robjects.conversion import localconverter
 from rpy2.robjects import default_converter
 from middleware.auth import token_required
+from middleware.schema_validator import validate_payload
+
 
 predict_bp = Blueprint("predict", __name__)
 
@@ -22,6 +24,11 @@ model = readRDS(MODEL_PATH)
 @token_required
 def predict():
     data = request.get_json()
+
+    err = validate_payload(data)
+    if err:
+        return jsonify({"error": err}), 400
+
     df = pd.DataFrame([data])
 
     with localconverter(default_converter + pandas2ri.converter):

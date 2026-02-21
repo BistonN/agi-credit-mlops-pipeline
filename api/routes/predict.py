@@ -5,27 +5,33 @@ from rpy2 import robjects
 from rpy2.robjects import pandas2ri
 from rpy2.robjects.conversion import localconverter
 from rpy2.robjects import default_converter
+
 from middleware.auth import token_required
 from middleware.schema_validator import validate_payload
-
+from middleware.model_loader import get_model_path, get_latest_version
 
 predict_bp = Blueprint("predict", __name__)
-
-MODEL_PATH = os.getenv("MODEL_PATH", "/app/artifacts/model_v1.rds")
 
 robjects.r("library(tidymodels)")
 
 readRDS = robjects.r["readRDS"]
 predict_tm = robjects.r["predict"]
 
-model = readRDS(MODEL_PATH)
-
 @predict_bp.route("/predict", methods=["POST"])
 @token_required
 def predict():
+    version = request.args.get("version") or get_latest_version()
+
+    model_path = get_model_path(version)
+
+    if not os.path.exists(model_path):
+        return jsonify({"error": "model version not found"}), 404
+
+    model = readRDS(model_path)
+
     data = request.get_json()
 
-    err = validate_payload(data)
+    err = validate_payload(data, version)
     if err:
         return jsonify({"error": err}), 400
 
@@ -40,6 +46,7 @@ def predict():
     prediction = int(prob_default >= 0.5)
 
     return jsonify({
+        "model_version": version,
         "prediction": prediction,
         "prob_default": prob_default
     })

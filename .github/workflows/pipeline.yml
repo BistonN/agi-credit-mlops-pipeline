@@ -1,0 +1,100 @@
+name: mlops-pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - test/**
+  pull_request:
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download training dataset
+        run: |
+          mkdir -p training/data
+          wget -O training/data/application_train.csv "https://www.dropbox.com/scl/fi/hmhnf33bbapvpsq6becmo/application_train.csv?rlkey=t9i95h11b1uyc6dsh6s40z3x4&st=xzu9ijx2&dl=0"
+          if head training/data/application_train.csv | grep -qi html; then exit 1; fi
+
+      - name: Validate data and artifacts structure
+        run: |
+          test -f training/data/application_train.csv || exit 1
+          mkdir -p training/artifacts
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('**/requirements.txt') }}
+
+      - name: Install lint tools
+        run: pip install flake8
+
+      - name: Run lint
+        run: flake8 api || true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build training image (cached)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./training
+          tags: credit-training:latest
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run training container
+        run: |
+          docker create --name training-job credit-training
+          docker cp training/data training-job:/app/data
+          docker start -a training-job
+          docker cp training-job:/app/artifacts/. training/artifacts
+          docker rm training-job
+
+      - name: Check model artifacts
+        run: |
+          ls -la training/artifacts
+          test -f training/artifacts/model_v1.rds
+          test -f training/artifacts/model_metadata.json
+
+      - name: Build API image (cached)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./api
+          tags: credit-api:latest
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run API container
+        run: |
+          docker run -d \
+            -p 5000:5000 \
+            -v ${{ github.workspace }}/training/artifacts:/app/artifacts \
+            credit-api
+
+      - name: Wait API startup
+        run: sleep 10
+
+      - name: Health check
+        run: curl --fail http://localhost:5000/health
+
+      - name: Generate image tag
+        run: |
+          TAG=$(date +%Y%m%d)-${GITHUB_SHA::7}
+          echo "IMAGE_TAG=$TAG" >> $GITHUB_ENV
+
+      - name: Show tag
+        run: echo "Docker tag is $IMAGE_TAG"

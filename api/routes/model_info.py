@@ -1,19 +1,25 @@
-import os
-import json
-from flask import Blueprint, jsonify
+import json, os
+from flask import Blueprint, jsonify, request
 from middleware.auth import token_required
+from middleware.model_loader import load_metadata
 
 model_info_bp = Blueprint("model_info", __name__)
-
-METADATA_PATH = os.getenv("MODEL_METADATA_PATH", "/app/artifacts/model_metadata.json")
 
 @model_info_bp.route("/model-info", methods=["GET"])
 @token_required
 def model_info():
-    if not os.path.exists(METADATA_PATH):
+    version = request.args.get("version")
+
+    if not os.path.exists("/app/artifacts/metadata.json"):
         return jsonify({"error": "model metadata not found"}), 404
 
-    with open(METADATA_PATH, "r") as f:
-        metadata = json.load(f)
+    meta = load_metadata()
 
-    return jsonify(metadata)
+    if not version:
+        return jsonify(meta)
+
+    for m in meta["models"]:
+        if m["version"] == version:
+            return jsonify(m)
+
+    return jsonify({"error": "model version not found"}), 404

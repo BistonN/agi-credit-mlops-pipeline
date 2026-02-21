@@ -8,6 +8,8 @@ services:
     command: Rscript /app/train.R
 
   api:
+    depends_on:
+      - training
     build: ./api
     env_file: .env
     volumes:

@@ -4,3 +4,5 @@ pandas
 joblib
 python-dotenv
 rpy2
+pyjwt
+python-json-logger

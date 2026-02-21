@@ -66,8 +66,9 @@ jobs:
       - name: Check model artifacts
         run: |
           ls -la training/artifacts
-          test -f training/artifacts/model_v1.rds
-          test -f training/artifacts/model_metadata.json
+          test -f training/artifacts/metadata.json
+          test -d training/artifacts/models
+          ls training/artifacts/models/model_*.rds | head -n 1
 
       - name: Build API image (cached)
         uses: docker/build-push-action@v5

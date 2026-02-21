@@ -5,7 +5,6 @@ services:
     volumes:
       - ./training/data:/app/data
       - ./training/artifacts:/app/artifacts
-    command: Rscript /app/train.R
 
   api:
     depends_on:

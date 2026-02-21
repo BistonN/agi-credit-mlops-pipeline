@@ -9,6 +9,7 @@ on:
 jobs:
   pipeline:
     runs-on: ubuntu-latest
+    environment: agi-main
 
     steps:
       - name: Checkout code
@@ -82,6 +83,7 @@ jobs:
         run: |
           docker run -d \
             -p 5000:5000 \
+            -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
             -v ${{ github.workspace }}/training/artifacts:/app/artifacts \
             credit-api
 

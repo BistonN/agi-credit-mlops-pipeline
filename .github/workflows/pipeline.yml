@@ -87,6 +87,11 @@ jobs:
             -v ${{ github.workspace }}/training/artifacts:/app/artifacts \
             credit-api
 
+      - name: Show API logs
+        run: |
+          docker ps -a
+          docker logs $(docker ps -q)
+
       - name: Wait for API
         run: |
           for i in {1..30}; do

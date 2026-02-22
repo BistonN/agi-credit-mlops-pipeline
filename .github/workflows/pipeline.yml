@@ -82,19 +82,20 @@ jobs:
       - name: Run API container
         run: |
           docker run -d \
+            --name credit-api-container \
             -p 5000:5000 \
-            -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+            -e JWT_SECRET="jwt_teste_pipeline" \
             -v ${{ github.workspace }}/training/artifacts:/app/artifacts \
             credit-api
 
       - name: Show API logs
         run: |
           docker ps -a
-          docker logs $(docker ps -q)
+          docker logs credit-api-container
 
       - name: Wait for API
         run: |
-          for i in {1..30}; do
+          for i in $(seq 1 30); do
             if curl -s http://localhost:5000/health > /dev/null; then
               echo "API is up"
               exit 0
@@ -102,6 +103,7 @@ jobs:
             sleep 2
           done
           echo "API failed to start"
+          docker logs credit-api-container
           exit 1
 
       - name: Health check

@@ -14,6 +14,8 @@ RUN R -e "install.packages(c('tidymodels','jsonlite'), repos='https://cloud.r-pr
 
 COPY app.py .
 COPY routes /app/routes
+COPY middleware /app/middleware
+COPY data /app/data
 
 EXPOSE 5000
 

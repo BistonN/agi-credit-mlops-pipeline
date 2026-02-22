@@ -2,7 +2,7 @@ import jwt, os
 from flask import request, jsonify
 from functools import wraps
 
-SECRET = os.getenv("JWT_SECRET")
+SECRET = os.getenv("JWT_SECRET", "agisecretkey")
 
 def token_required(f):
     @wraps(f)
